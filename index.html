@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Microverse - Cell Biology Explorer</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React 18 & ReactDOM 18 UMD -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  
+  <!-- Babel Standalone for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Inter Font -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 selection:bg-purple-200 selection:text-purple-900 min-h-screen">
+
+  <!-- Root mount point for React -->
+  <div id="root"></div>
+
+  <!-- React Application Script -->
+  <script type="text/babel">
+    const { useState, useMemo } = React;
+
+    // SVG Icon Helper Components (Self-contained, zero external icon library dependencies)
+    const Compass = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+      </svg>
+    );
+
+    const Layers = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+        <polyline points="2 17 12 22 22 17"/>
+        <polyline points="2 12 12 17 22 12"/>
+      </svg>
+    );
+
+    const BookOpen = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    );
+
+    const Search = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    );
+
+    const CheckCircle2 = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+        <path d="m9 12 2 2 4-4"/>
+      </svg>
+    );
+
+    const ChevronRight = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    );
+
+    const Info = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+    );
+
+    const X = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    );
+
+    const Heart = ({ className = "w-5 h-5" }) => (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      </svg>
+    );
+
+    const Dna = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M2 15c6.667-6 13.333 0 20-6"/>
+        <path d="M2 9c6.667 6 13.333 0 20 6"/>
+        <path d="M12 12v.01"/>
+      </svg>
+    );
+
+    const MousePointerClick = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="m9 9 5 12 1.8-5.2L21 14Z"/>
+        <path d="M7.2 2.2 8 5.1"/>
+        <path d="m5.1 8-2.9-.8"/>
+        <path d="M14 4.1 12 6"/>
+        <path d="m6 12-1.9 2"/>
+      </svg>
+    );
+
+    const Eye = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      </svg>
+    );
+
+    const Microscope = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M6 18h8"/>
+        <path d="M3 22h18"/>
+        <path d="M14 22a7 7 0 1 0-14 0"/>
+        <path d="M9 14h2"/>
+        <path d="M9 12a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2Z"/>
+      </svg>
+    );
+
+    const ArrowLeftRight = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <polyline points="8 3 4 7 8 11"/>
+        <line x1="4" y1="7" x2="20" y2="7"/>
+        <polyline points="16 21 20 17 16 13"/>
+        <line x1="20" y1="17" x2="4" y2="17"/>
+      </svg>
+    );
+
+    const Building2 = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <rect width="16" height="20" x="4" y="2" rx="2" ry="2"/>
+        <path d="M9 22v-4h6v4"/>
+        <path d="M8 6h.01"/>
+        <path d="M16 6h.01"/>
+        <path d="M12 6h.01"/>
+        <path d="M12 10h.01"/>
+        <path d="M12 14h.01"/>
+        <path d="M16 10h.01"/>
+        <path d="M16 14h.01"/>
+        <path d="M8 10h.01"/>
+        <path d="M8 14h.01"/>
+      </svg>
+    );
+
+    const LayoutList = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <line x1="8" y1="6" x2="21" y2="6"/>
+        <line x1="8" y1="12" x2="21" y2="12"/>
+        <line x1="8" y1="18" x2="21" y2="18"/>
+        <line x1="3" y1="6" x2="3.01" y2="6"/>
+        <line x1="3" y1="12" x2="3.01" y2="12"/>
+        <line x1="3" y1="18" x2="3.01" y2="18"/>
+      </svg>
+    );
+
+    const LayoutGrid = ({ className = "w-5 h-5" }) => (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="7" height="7"/>
+        <rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/>
+        <rect x="3" y="14" width="7" height="7"/>
+      </svg>
+    );
+
+    const ImageWithFallback = ({ src, alt, className, fallbackIcon: FallbackIcon = Microscope }) => {
+      const [hasError, setHasError] = useState(false);
+
+      if (hasError || !src) {
+        return (
+          <div className={`bg-slate-100 border border-slate-200 flex flex-col items-center justify-center p-3 text-slate-400 select-none ${className}`}>
+            <FallbackIcon className="w-6 h-6 text-purple-400 mb-1 opacity-80" />
+            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Micrograph</span>
+          </div>
+        );
+      }
+
+      return (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          onError={() => setHasError(true)}
+          loading="lazy"
+        />
+      );
+    };
+
+    const ORGANELLES_DATA = [
+      {
+        id: "nucleus",
+        name: "Nucleus",
+        tagline: "The Genetic Command Center",
+        membrane: "Double Membrane (Nuclear Envelope)",
+        membraneCategory: "double",
+        functionCategory: "control",
+        cellTypes: ["Animal", "Plant"],
+        color: "#8b5cf6",
+        badgeBg: "bg-purple-100",
+        badgeText: "text-purple-700",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/57/Micrograph_of_a_cell_nucleus.png?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+        shortDesc: "Houses genomic DNA, directs protein synthesis, and controls cellular growth and reproduction.",
+        detailedDesc: "The nucleus is the eukaryotic cell's information vault. Enclosed by a double-layered nuclear envelope perforated with nuclear pore complexes, it regulates the transport of RNA and proteins. Within, DNA wraps tightly around histone proteins to form chromatin.",
+        keyFunctions: [
+          "Stores and protects genomic DNA",
+          "Coordinates gene transcription and mRNA synthesis",
+          "Controls cell cycle progression and replication",
+          "Houses the nucleolus for ribosome assembly"
+        ],
+        molecularMachinery: "Genomic DNA, Histones, RNA Polymerase I/II/III, Nuclear Lamin A/C",
+        medicalPathology: "Hutchinson-Gilford Progeria, Emery-Dreifuss Muscular Dystrophy, Systemic Lupus.",
+        discoveryYear: "1831",
+        discoveredBy: "Robert Brown",
+        svgPos: {
+          animal: { cx: 50, cy: 48, r: 15 },
+          plant: { cx: 32, cy: 32, r: 12 }
+        }
+      },
+      {
+        id: "nucleolus",
+        name: "Nucleolus",
+        tagline: "Ribosome Assembly Workshop",
+        membrane: "Non-membrane bound",
+        membraneCategory: "non-membrane",
+        functionCategory: "control",
+        cellTypes: ["Animal", "Plant"],
+        color: "#ec4899",
+        badgeBg: "bg-pink-100",
+        badgeText: "text-pink-700",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/e/eb/NucleolusNCc.jpg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+        shortDesc: "Dense nuclear region dedicated to transcribing ribosomal RNA (rRNA) and assembling ribosome subunits.",
+        detailedDesc: "Formed around Nucleolar Organizer Regions (NORs) of chromosomes, the nucleolus transcribes 45S pre-rRNA, processes it, and combines it with imported ribosomal proteins to produce immature 40S and 60S ribosomal subunits.",
+        keyFunctions: [
+          "Ribosomal RNA (rRNA) transcription and processing",
+          "Assembly of pre-ribosomal subunits",
+          "Sensing cellular stress and controlling p53 stability"
+        ],
+        molecularMachinery: "rRNA gene clusters, Fibrillarin, Nucleolin, RNA Polymerase I",
+        medicalPathology: "Treacher Collins Syndrome, Diamond-Blackfan Anemia, Cancer hyper-proliferation.",
+        discoveryYear: "1835",
+        discoveredBy: "Gabriel Valentin",
+        svgPos: {
+          animal: { cx: 50, cy: 48, r: 5 },
+          plant: { cx: 32, cy: 32, r: 4 }
+        }
+      },
+      {
+        id: "nucleoid",
+        name: "Nucleoid Region",
+        tagline: "Unbound Prokaryotic Genetic Center",
+        membrane: "Non-membrane bound",
+        membraneCategory: "non-membrane",
+        functionCategory: "control",
+        cellTypes: ["Prokaryote"],
+        color: "#a855f7",
+        badgeBg: "bg-purple-100",
+        badgeText: "text-purple-700",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/a/ad/Undibacterium_aquatile.jpg",
+        shortDesc: "Irregularly shaped region within prokaryotic cells containing all or most of the circular genomic DNA.",
+        detailedDesc: "Unlike eukaryotic cells with double-membraned nuclei, prokaryotic bacteria and archaea store their single circular chromosome in an unwrapped cytosolic region called the nucleoid, allowing simultaneous transcription and translation.",
+        keyFunctions: [
+          "Stores circular genomic DNA and coordinates gene expression",
+          "Engages in immediate co-transcriptional protein translation",
+          "Replicates chromosome prior to binary fission division"
+        ],
+        molecularMachinery: "Circular chromosome DNA, HU & H-NS proteins, DNA Polymerase III, Topoisomerase IV",
+        medicalPathology: "Target of fluoroquinolone antibiotics (e.g. Ciprofloxacin targeting DNA gyrase).",
+        discoveryYear: "1950s",
+        discoveredBy: "Bacterial Cytologists & TEM Researchers",
+        svgPos: {
+          prokaryote: { cx: 50, cy: 50, r: 15 }
+        }
+      },
+      {
+        id: "mitochondria",
+        name: "Mitochondria",
+        tagline: "Powerhouse of the Cell",
+        membrane: "Double Membrane (Folded Cristae)",
+        membraneCategory: "double",
+        functionCategory: "energy",
+        cellTypes: ["Animal", "Plant"],
+        color: "#f59e0b",
+        badgeBg: "bg-amber-100",
+        badgeText: "text-amber-800",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/1/11/Figure_23_01_01.jpg",
+        shortDesc: "Generates cellular ATP energy via oxidative phosphorylation and the Krebs cycle.",
+        detailedDesc: "Mitochondria are double-membraned organelles supporting the Endosymbiotic Theory. Their inner membrane is heavily folded into cristae to maximize surface area for the Electron Transport Chain (Complexes I-IV + ATP Synthase).",
+        keyFunctions: [
+          "ATP energy generation via cellular respiration",
+          "Fatty acid beta-oxidation and Krebs Cycle catalysis",
+          "Cytosolic calcium ion (Ca2+) buffering",
+          "Triggering intrinsic apoptosis via Cytochrome c release"
+        ],
+        molecularMachinery: "ATP Synthase rotary motors, Cytochrome c, mtDNA, Coenzyme Q10",
+        medicalPathology: "MELAS Syndrome, Mitochondrial Myopathy, Parkinson's disease links.",
+        discoveryYear: "1857",
+        discoveredBy: "Albert von Kölliker",
+        svgPos: {
+          animal: { cx: 25, cy: 30, r: 8 },
+          plant: { cx: 24, cy: 72, r: 6 }
+        }
+      },
+      {
+        id: "rough_er",
+        name: "Rough Endoplasmic Reticulum",
+        tagline: "Protein Assembly Line & Quality Control",
+        membrane: "Single Membrane with studded Ribosomes",
+        membraneCategory: "single",
+        functionCategory: "secretion",
+        cellTypes: ["Animal", "Plant"],
+        color: "#2563eb",
+        badgeBg: "bg-blue-100",
+        badgeText: "text-blue-700",
+        imageUrl: "Ribosome.png",
+        shortDesc: "Folded membrane network studded with ribosomes for synthesizing membrane and secreted proteins.",
+        detailedDesc: "Continuous with the nuclear membrane, the Rough ER features flattened membranous sacs (cisternae). Ribosomes bound to its cytosolic face translate proteins directly into the ER lumen for chaperoned folding.",
+        keyFunctions: [
+          "Synthesis of membrane-bound and extracellular proteins",
+          "Protein folding and quality inspection",
+          "N-linked glycosylation of nascent polypeptides"
+        ],
+        molecularMachinery: "Ribosomes, Signal Recognition Particle (SRP), Sec61 Translocon, BiP Chaperone",
+        medicalPathology: "Cystic Fibrosis (misfolded CFTR protein degraded in ER), Neurodegenerative proteinopathies.",
+        discoveryYear: "1945",
+        discoveredBy: "Albert Claude & Keith Porter",
+        svgPos: {
+          animal: { cx: 70, cy: 42, r: 10 },
+          plant: { cx: 30, cy: 52, r: 7 }
+        }
+      },
+      {
+        id: "smooth_er",
+        name: "Smooth Endoplasmic Reticulum",
+        tagline: "Lipid Factory & Detoxification Center",
+        membrane: "Single Tubular Membrane",
+        membraneCategory: "single",
+        functionCategory: "secretion",
+        cellTypes: ["Animal", "Plant"],
+        color: "#0891b2",
+        badgeBg: "bg-cyan-100",
+        badgeText: "text-cyan-800",
+        imageUrl: "Endoplasmic Reticulum.png",
+        shortDesc: "Synthesizes cellular lipids, steroid hormones, and neutralizes toxic metabolic chemicals.",
+        detailedDesc: "Lacking ribosomes, the Smooth ER consists of interconnected tubular networks. It manufactures phospholipids for cell membranes, synthesizes steroid hormones, and uses Cytochrome P450 enzymes to detoxify drugs.",
+        keyFunctions: [
+          "Synthesis of phospholipids, cholesterol, and steroid hormones",
+          "Metabolic detoxification of alcohol and drug compounds",
+          "Sequestration and release of Ca2+ ions in muscle (Sarcoplasmic ER)"
+        ],
+        molecularMachinery: "Cytochrome P450 enzymes, HMG-CoA Reductase, SERCA Ca2+ pumps",
+        medicalPathology: "Hepatic Steatosis (Fatty Liver Disease), Drug tolerance expansion.",
+        discoveryYear: "1953",
+        discoveredBy: "Keith Porter & George Palade",
+        svgPos: {
+          animal: { cx: 72, cy: 64, r: 8 },
+          plant: { cx: 75, cy: 72, r: 6 }
+        }
+      },
+      {
+        id: "golgi",
+        name: "Golgi Apparatus",
+        tagline: "Packaging, Tagging & Postal Hub",
+        membrane: "Single Membrane Cisternae Stacks",
+        membraneCategory: "single",
+        functionCategory: "secretion",
+        cellTypes: ["Animal", "Plant"],
+        color: "#059669",
+        badgeBg: "bg-emerald-100",
+        badgeText: "text-emerald-800",
+        imageUrl: "Golgi Apparatus.png",
+        shortDesc: "Modifies, sorts, and packages proteins into vesicles for transport to destinations inside or outside the cell.",
+        detailedDesc: "The Golgi consists of distinct flattened membranous cisternae organized into cis-, medial-, and trans-Golgi networks. It receives protein packages from the ER, adds molecular shipping labels, and dispatches transport vesicles.",
+        keyFunctions: [
+          "Post-translational O-linked glycosylation of proteins",
+          "Addition of mannose-6-phosphate tags for lysosomal delivery",
+          "Sorting and packaging into secretory vesicles"
+        ],
+        molecularMachinery: "Glycosyltransferases, COP I & COP II vesicle coats, SNARE docking proteins",
+        medicalPathology: "Congenital Disorders of Glycosylation (CDG), I-Cell Disease.",
+        discoveryYear: "1898",
+        discoveredBy: "Camillo Golgi",
+        svgPos: {
+          animal: { cx: 30, cy: 68, r: 9 },
+          plant: { cx: 75, cy: 50, r: 7 }
+        }
+      },
+      {
+        id: "lysosome",
+        name: "Lysosome",
+        tagline: "Cellular Recycling & Waste Disposal Unit",
+        membrane: "Single Acidic Membrane",
+        membraneCategory: "single",
+        functionCategory: "waste",
+        cellTypes: ["Animal"],
+        color: "#dc2626",
+        badgeBg: "bg-red-100",
+        badgeText: "text-red-700",
+        imageUrl: "Lysosome.png",
+        shortDesc: "Contains acidic hydrolytic enzymes that digest worn-out cellular parts, cellular debris, and pathogens.",
+        detailedDesc: "Lysosomes maintain an acidic internal environment (~pH 4.5–5.0) powered by membrane-bound V-ATPase proton pumps. Their lumen contains over 50 different acid hydrolases that safely break down cellular waste.",
+        keyFunctions: [
+          "Autophagy (digesting damaged organelles for nutrient reuse)",
+          "Phagocytosis (destroying engulfed bacteria and viruses)",
+          "Endocytic degradation of receptor-ligand complexes"
+        ],
+        molecularMachinery: "Acid Hydrolases (Cathepsins, Glycosidases), V-type H+ ATPase proton pumps",
+        medicalPathology: "Tay-Sachs Disease, Gaucher Disease, Niemann-Pick Disease.",
+        discoveryYear: "1955",
+        discoveredBy: "Christian de Duve",
+        svgPos: {
+          animal: { cx: 22, cy: 50, r: 5 }
+        }
+      },
+      {
+        id: "chloroplast",
+        name: "Chloroplast",
+        tagline: "Solar Power Generator",
+        membrane: "Double Membrane + Thylakoid System",
+        membraneCategory: "double",
+        functionCategory: "energy",
+        cellTypes: ["Plant"],
+        color: "#65a30d",
+        badgeBg: "bg-lime-100",
+        badgeText: "text-lime-800",
+        imageUrl: "Chloroplast.png",
+        shortDesc: "Converts solar light, CO2, and water into chemical energy (glucose) via photosynthesis.",
+        detailedDesc: "Exclusive to plants and algae, chloroplasts contain thylakoid membranes stacked into grana suspended in fluid stroma. Chlorophyll pigments harvest photons to generate ATP and NADPH, driving carbon fixation via the Calvin Cycle.",
+        keyFunctions: [
+          "Photosynthesis (Light-dependent reactions & Calvin Cycle)",
+          "Synthesis of amino acids and fatty acids",
+          "Plant immune signaling defense responses"
+        ],
+        molecularMachinery: "Chlorophyll a/b, RuBisCO enzyme, Photosystem I & II, Ferredoxin",
+        medicalPathology: "Plant Chlorosis (yellowing leaves caused by magnesium/iron deficiency).",
+        discoveryYear: "1883",
+        discoveredBy: "Andreas Schimper",
+        svgPos: {
+          plant: { cx: 76, cy: 30, r: 8 }
+        }
+      },
+      {
+        id: "vacuole",
+        name: "Central Vacuole",
+        tagline: "Water Storage Tank & Structural Support",
+        membrane: "Single Membrane (Tonoplast)",
+        membraneCategory: "single",
+        functionCategory: "waste",
+        cellTypes: ["Plant"],
+        color: "#0284c7",
+        badgeBg: "bg-sky-100",
+        badgeText: "text-sky-800",
+        imageUrl: "Central Vacuole.png",
+        shortDesc: "Massive liquid reservoir maintaining plant cell turgor pressure and storing ions and pigments.",
+        detailedDesc: "Occupying up to 80-90% of a plant cell's total volume, the central vacuole is bounded by a selective membrane called the tonoplast. It maintains turgor pressure against the cell wall, keeping leaves and stems upright.",
+        keyFunctions: [
+          "Maintaining turgor hydrostatic pressure for plant cell rigidity",
+          "Storage of inorganic ions (K+, Cl-), sugars, and metabolites",
+          "Pigmentation via anthocyanin storage to attract pollinators"
+        ],
+        molecularMachinery: "Aquaporins, Tonoplast V-ATPase, V-PPase proton pumps",
+        medicalPathology: "Plant Wilting (loss of vacuolar water pressure during drought).",
+        discoveryYear: "1776",
+        discoveredBy: "Lazzaro Spallanzani",
+        svgPos: {
+          plant: { cx: 50, cy: 54, r: 20 }
+        }
+      },
+      {
+        id: "ribosome",
+        name: "Ribosome",
+        tagline: "Molecular Protein Factory",
+        membrane: "Non-membrane bound macromolecular complex",
+        membraneCategory: "non-membrane",
+        functionCategory: "secretion",
+        cellTypes: ["Animal", "Plant", "Prokaryote"],
+        color: "#4f46e5",
+        badgeBg: "bg-indigo-100",
+        badgeText: "text-indigo-700",
+        imageUrl: "Ribosome.png",
+        shortDesc: "Translates messenger RNA (mRNA) nucleotide codes into polypeptide chains of amino acids.",
+        detailedDesc: "Ribosomes are non-membranous complexes of ribosomal RNA (rRNA) and catalytic proteins. Eukaryotes feature 80S ribosomes (40S + 60S), while prokaryotes have 70S ribosomes (30S + 50S), making them targets for selective antibiotics.",
+        keyFunctions: [
+          "Reading mRNA codons during translation",
+          "Catalyzing peptide bond formation between amino acids",
+          "Co-translational translocation of secreted proteins into ER"
+        ],
+        molecularMachinery: "28S/18S rRNAs, Ribosomal proteins, Peptidyl transferase ribozyme",
+        medicalPathology: "Diamond-Blackfan Anemia, targeted by tetracycline & erythromycin antibiotics.",
+        discoveryYear: "1955",
+        discoveredBy: "George Palade",
+        svgPos: {
+          animal: { cx: 40, cy: 25, r: 3 },
+          plant: { cx: 28, cy: 18, r: 3 },
+          prokaryote: { cx: 30, cy: 40, r: 3 }
+        }
+      },
+      {
+        id: "cytoskeleton",
+        name: "Cytoskeleton",
+        tagline: "Cellular Scaffold & Highway",
+        membrane: "Non-membrane bound filament network",
+        membraneCategory: "non-membrane",
+        functionCategory: "structure",
+        cellTypes: ["Animal", "Plant", "Prokaryote"],
+        color: "#d97706",
+        badgeBg: "bg-amber-100",
+        badgeText: "text-amber-800",
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Btub.jpg?utm_source=en.wikipedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+        shortDesc: "Interconnected network of protein filaments providing structural shape, motility, and organelle transport.",
+        detailedDesc: "The cytoskeleton consists of three major filament types: Microfilaments (Actin, 7nm), Intermediate Filaments (Keratins/Lamins, 10nm), and Microtubules (Tubulin, 25nm). Motor proteins walk along these tracks.",
+        keyFunctions: [
+          "Maintaining cell shape and mechanical resilience",
+          "Directing intracellular transport of organelles and vesicles",
+          "Forming mitotic spindles during chromosome separation"
+        ],
+        molecularMachinery: "Actin, Alpha/Beta Tubulin, Kinesin, Dynein, Myosin motors",
+        medicalPathology: "Amyotrophic Lateral Sclerosis (ALS), Epidermolysis Bullosa.",
+        discoveryYear: "1903",
+        discoveredBy: "Nikolai Koltzov",
+        svgPos: {
+          animal: { cx: 78, cy: 25, r: 5 },
+          plant: { cx: 78, cy: 82, r: 5 }
+        }
+      },
+      {
+        id: "plasma_membrane",
+        name: "Plasma Membrane",
+        tagline: "Cell Boundary & Gatekeeper",
+        membrane: "Phospholipid Bilayer",
+        membraneCategory: "single",
+        functionCategory: "structure",
+        cellTypes: ["Animal", "Plant", "Prokaryote"],
+        color: "#0d9488",
+        badgeBg: "bg-teal-100",
+        badgeText: "text-teal-800",
+        imageUrl: "Plasma membrane.png",
+        shortDesc: "Selective phospholipid bilayer controlling what enters and exits the cell.",
+        detailedDesc: "Described by Singer & Nicolson's Fluid Mosaic Model, the plasma membrane consists of amphipathic phospholipids, cholesterol, integral transmembrane transport channels, and peripheral signaling receptors.",
+        keyFunctions: [
+          "Selective transport of ions, water, and nutrients",
+          "Transmitting extracellular signals via hormone receptors",
+          "Maintaining resting membrane potential via Na+/K+ pumps"
+        ],
+        molecularMachinery: "Phospholipids, Cholesterol, Na+/K+ ATPase, Aquaporins, Integrins",
+        medicalPathology: "Familial Hypercholesterolemia, Cystic Fibrosis (faulty CFTR channel).",
+        discoveryYear: "1895",
+        discoveredBy: "Charles Ernest Overton",
+        svgPos: {}
+      },
+      {
+        id: "peroxisome",
+        name: "Peroxisome",
+        tagline: "Oxidative Detoxifier",
+        membrane: "Single Membrane",
+        membraneCategory: "single",
+        functionCategory: "waste",
+        cellTypes: ["Animal", "Plant"],
+        color: "#e11d48",
+        badgeBg: "bg-rose-100",
+        badgeText: "text-rose-700",
+        imageUrl: "Peroxisome.png",
+        shortDesc: "Breaks down very long-chain fatty acids and neutralizes harmful hydrogen peroxide byproduct.",
+        detailedDesc: "Peroxisomes carry out metabolic oxidation reactions that generate hydrogen peroxide (H2O2). They immediately neutralize this toxic compound using Catalase, converting H2O2 into water and oxygen.",
+        keyFunctions: [
+          "Beta-oxidation of Very Long Chain Fatty Acids (VLCFAs)",
+          "Neutralization of H2O2 via Catalase enzyme",
+          "Biosynthesis of ether lipids (Plasmalogens) for myelin"
+        ],
+        molecularMachinery: "Catalase, Acyl-CoA Oxidase, Peroxins (PEX proteins)",
+        medicalPathology: "Zellweger Syndrome, X-linked Adrenoleukodystrophy (X-ALD).",
+        discoveryYear: "1967",
+        discoveredBy: "Christian de Duve",
+        svgPos: {
+          animal: { cx: 60, cy: 25, r: 4 },
+          plant: { cx: 22, cy: 82, r: 4 }
+        }
+      }
+    ];
+
+    const HISTORY_TIMELINE = [
+      {
+        year: "1665",
+        title: "Discovery of Cells & Coining the Term",
+        scientist: "Robert Hooke",
+        discovery: "Examined thin slices of cork under an early compound microscope and observed box-like compartments, coining the term 'cell' (Latin cella = small room).",
+        impact: "Formed the foundational concept of microscopic cell biology.",
+        category: "Microscopy",
+        imageUrl: "Robert Hooke.jpg"
+      },
+      {
+        year: "1674",
+        title: "Observation of Living Microorganisms ('Animalcules')",
+        scientist: "Antonie van Leeuwenhoek",
+        discovery: "Crafted single-lens high-magnification microscopes (~270x) and discovered living bacteria, protozoa, sperm cells, and red blood cells.",
+        impact: "Proved that invisible, microscopic living creatures exist.",
+        category: "Microscopy",
+        imageUrl: "Anthonie_van_Leeuwenhoek.jpeg"
+      },
+      {
+        year: "1831",
+        title: "Discovery of the Eukaryotic Nucleus",
+        scientist: "Robert Brown",
+        discovery: "Studied plant cells under magnification and identified a dense, dark central sphere, naming it the 'nucleus'.",
+        impact: "Recognized the first universal internal organelle in living eukaryotic cells.",
+        category: "Organelles",
+        imageUrl: "Robert_Brown.jpg"
+      },
+      {
+        year: "1838 - 1839",
+        title: "Formulation of Classical Cell Theory",
+        scientist: "Matthias Schleiden & Theodor Schwann",
+        discovery: "Schleiden (botanist) and Schwann (zoologist) united their research to declare that all plants and animals are composed of cells as the basic unit of life.",
+        impact: "Established the cornerstone paradigm of modern cellular science.",
+        category: "Cell Theory",
+        imageUrl: "Schleiden,_Schwann_Some_apostles_of_physiology.jpg"
+      },
+      {
+        year: "1855",
+        title: "Omnis Cellula e Cellula (Cell Division Dictum)",
+        scientist: "Rudolf Virchow",
+        discovery: "Stated 'Omnis cellula e cellula'—all cells arise exclusively from pre-existing cells through division, disproving spontaneous generation.",
+        impact: "Laid the foundation for cellular pathology and oncology.",
+        category: "Cell Theory",
+        imageUrl: "Rudolf_Virchow.jpg"
+      },
+      {
+        year: "1898",
+        title: "Discovery of the Internal Reticular Network",
+        scientist: "Camillo Golgi",
+        discovery: "Utilized silver nitrate staining on nerve cells to uncover a membranous reticular network, now known as the Golgi Apparatus.",
+        impact: "Uncovered the cell's internal protein sorting and shipping center.",
+        category: "Organelles",
+        imageUrl: "Camillo_Golgi.jpg"
+      },
+      {
+        year: "1931",
+        title: "Invention of the Transmission Electron Microscope (TEM)",
+        scientist: "Ernst Ruska & Max Knoll",
+        discovery: "Constructed the first electron microscope using electron beams instead of light rays, achieving nanometer resolution.",
+        impact: "Allowed scientists to see double membranes, ribosomes, and cristae clearly.",
+        category: "Microscopy",
+        imageUrl: "Ernst Ruska and Max Knoll.png"
+      },
+      {
+        year: "1955",
+        title: "Ribosome Discovery & Cellular Fractionation",
+        scientist: "George Palade",
+        discovery: "Combined electron microscopy and ultracentrifugation to discover ribosomes and map protein synthesis on the Rough ER.",
+        impact: "Directly linked physical organelle structure to biochemical function.",
+        category: "Organelles",
+        imageUrl: "George Palade.png"
+      },
+      {
+        year: "1967",
+        title: "Endosymbiotic Theory of Organelle Origins",
+        scientist: "Lynn Margulis",
+        discovery: "Proposed that mitochondria and chloroplasts originated as independent prokaryotic cells engulfed by host eukaryotes.",
+        impact: "Transformed evolutionary biology and cellular origins understanding.",
+        category: "Evolution",
+        imageUrl: "Lynn_Margulis.jpg"
+      }
+    ];
+
+    function App() {
+      const [activeTab, setActiveTab] = useState('explorer');
+      const [selectedCellType, setSelectedCellType] = useState('animal');
+      const [activeOrganelleId, setActiveOrganelleId] = useState('nucleus');
+      const [hoveredOrganelleId, setHoveredOrganelleId] = useState(null);
+
+      // Library state
+      const [libraryViewMode, setLibraryViewMode] = useState('list');
+      const [searchQuery, setSearchQuery] = useState('');
+      const [cellTypeFilter, setCellTypeFilter] = useState('all');
+      const [membraneFilter, setMembraneFilter] = useState('all');
+      const [functionFilter, setFunctionFilter] = useState('all');
+      const [favorites, setFavorites] = useState(['nucleus', 'mitochondria']);
+      const [dossierModalId, setDossierModalId] = useState(null);
+
+      // Compare mode state
+      const [isCompareOpen, setIsCompareOpen] = useState(false);
+      const [compareId1, setCompareId1] = useState('mitochondria');
+      const [compareId2, setCompareId2] = useState('chloroplast');
+
+      const activeOrganelle = useMemo(() => {
+        return ORGANELLES_DATA.find(o => o.id === activeOrganelleId) || ORGANELLES_DATA[0];
+      }, [activeOrganelleId]);
+
+      const dossierOrganelle = useMemo(() => {
+        return ORGANELLES_DATA.find(o => o.id === dossierModalId) || null;
+      }, [dossierModalId]);
+
+      const toggleFavorite = (id) => {
+        setFavorites(prev =>
+          prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+      };
+
+      const filteredOrganelles = useMemo(() => {
+        return ORGANELLES_DATA.filter(org => {
+          const matchesSearch =
+            org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            org.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            org.shortDesc.toLowerCase().includes(searchQuery.toLowerCase());
+
+          const matchesCellType =
+            cellTypeFilter === 'all' ||
+            (cellTypeFilter === 'animal' && org.cellTypes.includes('Animal')) ||
+            (cellTypeFilter === 'plant' && org.cellTypes.includes('Plant')) ||
+            (cellTypeFilter === 'prokaryote' && org.cellTypes.includes('Prokaryote'));
+
+          const matchesMembrane =
+            membraneFilter === 'all' || org.membraneCategory === membraneFilter;
+
+          const matchesFunction =
+            functionFilter === 'all' || org.functionCategory === functionFilter;
+
+          return matchesSearch && matchesCellType && matchesMembrane && matchesFunction;
+        });
+      }, [searchQuery, cellTypeFilter, membraneFilter, functionFilter]);
+
+      return (
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col selection:bg-purple-200 selection:text-purple-900">
+
+          {/* HEADER */}
+          <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:h-16 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+              {/* Logo & Title Area */}
+              <div className="w-full sm:w-auto flex items-center justify-between cursor-pointer" onClick={() => setActiveTab('explorer')}>
+                <span className="text-xl font-black tracking-tight text-slate-900">Microverse</span>
+              </div>
+
+              {/* Navigation Tabs */}
+              <nav className="w-full sm:w-auto flex items-center justify-center sm:justify-end gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {[
+                  { id: 'explorer', label: 'Interactive Cell', icon: Compass },
+                  { id: 'library', label: 'Organelle', icon: Layers },
+                  { id: 'history', label: 'Timeline', icon: BookOpen }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 ${
+                        isActive
+                          ? 'bg-purple-50 text-purple-700 border border-purple-200 shadow-sm'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-purple-600' : 'text-slate-500'}`} />
+                      <span className="whitespace-nowrap">{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </header>
+
+          {/* MAIN CONTENT AREA */}
+          <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+            {/* TAB 1: INTERACTIVE CELL DIAGRAM */}
+            {activeTab === 'explorer' && (
+              <div className="space-y-6">
+
+                {/* Header Toolbar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+                      <Compass className="w-6 h-6 text-purple-600" />
+                      Interactive Subcellular Diagram
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Click on any organelle on the cell map to load its biological dossier.
+                    </p>
+                  </div>
+
+                  {/* Cell Mode Selector */}
+                  <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200 self-start md:self-auto">
+                    {[
+                      { id: 'animal', label: 'Animal Cell' },
+                      { id: 'plant', label: 'Plant Cell' },
+                      { id: 'prokaryote', label: 'Prokaryote' }
+                    ].map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => {
+                          setSelectedCellType(type.id);
+                          if (type.id === 'plant') setActiveOrganelleId('vacuole');
+                          else if (type.id === 'prokaryote') setActiveOrganelleId('nucleoid');
+                          else setActiveOrganelleId('nucleus');
+                        }}
+                        className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                          selectedCellType === type.id
+                            ? 'bg-white text-purple-700 shadow-sm border border-slate-200'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {type.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Interactive Workspace Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                  {/* Left: Interactive Canvas */}
+                  <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 flex flex-col items-center justify-center relative shadow-sm min-h-[460px]">
+
+                    {/* Active Hover Badge */}
+                    <div className="absolute top-4 left-4 bg-slate-50/90 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 flex items-center gap-2 shadow-sm z-10">
+                      <MousePointerClick className="w-4 h-4 text-purple-600" />
+                      <span>
+                        Active: <strong className="text-purple-700">{hoveredOrganelleId ? ORGANELLES_DATA.find(o=>o.id===hoveredOrganelleId)?.name : activeOrganelle.name}</strong>
+                      </span>
+                    </div>
+
+                    {/* SVG Visual Canvas */}
+                    <div className="w-full max-w-[460px] aspect-square relative my-2">
+                      <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md select-none">
+                        <defs>
+                          <radialGradient id="animalLightBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#f3e8ff" />
+                            <stop offset="80%" stopColor="#e0e7ff" />
+                            <stop offset="100%" stopColor="#c7d2fe" />
+                          </radialGradient>
+                          <radialGradient id="plantLightBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#ecfdf5" />
+                            <stop offset="80%" stopColor="#d1fae5" />
+                            <stop offset="100%" stopColor="#a7f3d0" />
+                          </radialGradient>
+                          <radialGradient id="prokaryoteLightBg" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stopColor="#fef3c7" />
+                            <stop offset="100%" stopColor="#fde68a" />
+                          </radialGradient>
+                        </defs>
+
+                        {/* CELL BOUNDARY SHAPES */}
+                        {selectedCellType === 'animal' && (
+                          <path
+                            d="M 50 8 C 82 8, 93 25, 93 50 C 93 75, 80 93, 50 93 C 20 93, 7 75, 7 50 C 7 25, 18 8, 50 8 Z"
+                            fill="url(#animalLightBg)"
+                            stroke="#6366f1"
+                            strokeWidth="1.8"
+                            className="cursor-pointer"
+                            onClick={() => setActiveOrganelleId('plasma_membrane')}
+                            onMouseEnter={() => setHoveredOrganelleId('plasma_membrane')}
+                            onMouseLeave={() => setHoveredOrganelleId(null)}
+                          />
+                        )}
+
+                        {selectedCellType === 'plant' && (
+                          <g>
+                            <rect x="8" y="8" width="84" height="84" rx="16" ry="16" fill="none" stroke="#15803d" strokeWidth="2.8" />
+                            <rect
+                              x="11" y="11" width="78" height="78" rx="13" ry="13"
+                              fill="url(#plantLightBg)" stroke="#16a34a" strokeWidth="1.5"
+                              className="cursor-pointer"
+                              onClick={() => setActiveOrganelleId('plasma_membrane')}
+                              onMouseEnter={() => setHoveredOrganelleId('plasma_membrane')}
+                              onMouseLeave={() => setHoveredOrganelleId(null)}
+                            />
+                          </g>
+                        )}
+
+                        {selectedCellType === 'prokaryote' && (
+                          <g>
+                            <rect
+                              x="12" y="24" width="76" height="52" rx="26" ry="26"
+                              fill="url(#prokaryoteLightBg)" stroke="#d97706" strokeWidth="2"
+                              className="cursor-pointer"
+                              onClick={() => setActiveOrganelleId('plasma_membrane')}
+                              onMouseEnter={() => setHoveredOrganelleId('plasma_membrane')}
+                              onMouseLeave={() => setHoveredOrganelleId(null)}
+                            />
+                            <path d="M 12 50 C 2 40, -2 60, -10 50" fill="none" stroke="#d97706" strokeWidth="1.8" strokeDasharray="2,2" />
+                          </g>
+                        )}
+
+                        {/* RENDER DETAILED ORGANELLES */}
+                        {ORGANELLES_DATA.filter(org => org.id !== 'plasma_membrane' && org.svgPos[selectedCellType]).map((org) => {
+                          const pos = org.svgPos[selectedCellType];
+                          const isSelected = activeOrganelleId === org.id;
+
+                          return (
+                            <g
+                              key={org.id}
+                              onClick={(e) => { e.stopPropagation(); setActiveOrganelleId(org.id); }}
+                              onMouseEnter={() => setHoveredOrganelleId(org.id)}
+                              onMouseLeave={() => setHoveredOrganelleId(null)}
+                              className="cursor-pointer transition-all duration-200 hover:opacity-100"
+                            >
+                              {isSelected && (
+                                <circle cx={pos.cx} cy={pos.cy} r={pos.r + 4} fill="none" stroke={org.color} strokeWidth="1.8" strokeDasharray="2.5,2.5" />
+                              )}
+
+                              {org.id === 'nucleus' && (
+                                <g>
+                                  <circle cx={pos.cx} cy={pos.cy} r={pos.r} fill="#a78bfa" fillOpacity="0.85" stroke="#6d28d9" strokeWidth="1.2" />
+                                  <circle cx={pos.cx} cy={pos.cy} r={pos.r - 2} fill="#c4b5fd" fillOpacity="0.9" stroke="#7c3aed" strokeWidth="0.8" />
+                                  <circle cx={pos.cx - pos.r + 1} cy={pos.cy} r="0.8" fill="#4c1d95" />
+                                  <circle cx={pos.cx + pos.r - 1} cy={pos.cy} r="0.8" fill="#4c1d95" />
+                                  <circle cx={pos.cx} cy={pos.cy - pos.r + 1} r="0.8" fill="#4c1d95" />
+                                  <circle cx={pos.cx} cy={pos.cy + pos.r - 1} r="0.8" fill="#4c1d95" />
+                                </g>
+                              )}
+
+                              {org.id === 'nucleolus' && (
+                                <circle cx={pos.cx} cy={pos.cy} r={pos.r} fill="#db2777" fillOpacity="0.95" stroke="#9d174d" strokeWidth="1" />
+                              )}
+
+                              {org.id === 'nucleoid' && (
+                                <path
+                                  d={`M ${pos.cx - 8} ${pos.cy - 3} C ${pos.cx - 4} ${pos.cy - 10}, ${pos.cx + 6} ${pos.cy - 8}, ${pos.cx + 8} ${pos.cy} C ${pos.cx + 10} ${pos.cy + 8}, ${pos.cx - 2} ${pos.cy + 10}, ${pos.cx - 6} ${pos.cy + 2} C ${pos.cx - 10} ${pos.cy - 2}, ${pos.cx - 2} ${pos.cy - 6}, ${pos.cx - 8} ${pos.cy - 3} Z`}
+                                  fill="#c084fc" fillOpacity="0.6" stroke="#7e22ce" strokeWidth="1.5"
+                                />
+                              )}
+
+                              {org.id === 'mitochondria' && (
+                                <g transform={`rotate(${selectedCellType === 'plant' ? 45 : -25}, ${pos.cx}, ${pos.cy})`}>
+                                  <rect x={pos.cx - pos.r} y={pos.cy - pos.r / 2} width={pos.r * 2} height={pos.r} rx={pos.r / 2} fill="#fbbf24" fillOpacity="0.9" stroke="#b45309" strokeWidth="1" />
+                                  <path d={`M ${pos.cx - pos.r + 2} ${pos.cy} L ${pos.cx - pos.r + 4} ${pos.cy - 2} L ${pos.cx - pos.r + 6} ${pos.cy + 2} L ${pos.cx - pos.r + 8} ${pos.cy - 2} L ${pos.cx - pos.r + 10} ${pos.cy + 2} L ${pos.cx + pos.r - 2} ${pos.cy}`} fill="none" stroke="#d97706" strokeWidth="1.2" strokeLinecap="round" />
+                                </g>
+                              )}
+
+                              {org.id === 'rough_er' && (
+                                <g>
+                                  <path d={`M ${pos.cx - 8} ${pos.cy - 6} Q ${pos.cx} ${pos.cy - 8} ${pos.cx + 8} ${pos.cy - 6}`} fill="none" stroke="#3b82f6" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 9} ${pos.cy - 2} Q ${pos.cx} ${pos.cy - 4} ${pos.cx + 9} ${pos.cy - 2}`} fill="none" stroke="#2563eb" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 8} ${pos.cy + 2} Q ${pos.cx} ${pos.cy} ${pos.cx + 8} ${pos.cy + 2}`} fill="none" stroke="#1d4ed8" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 7} ${pos.cy + 6} Q ${pos.cx} ${pos.cy + 4} ${pos.cx + 7} ${pos.cy + 6}`} fill="none" stroke="#1e40af" strokeWidth="2.2" strokeLinecap="round" />
+                                  <circle cx={pos.cx - 5} cy={pos.cy - 7} r="0.7" fill="#1e1b4b" />
+                                  <circle cx={pos.cx + 3} cy={pos.cy - 3} r="0.7" fill="#1e1b4b" />
+                                  <circle cx={pos.cx - 2} cy={pos.cy + 1} r="0.7" fill="#1e1b4b" />
+                                  <circle cx={pos.cx + 5} cy={pos.cy + 5} r="0.7" fill="#1e1b4b" />
+                                </g>
+                              )}
+
+                              {org.id === 'smooth_er' && (
+                                <g>
+                                  <path d={`M ${pos.cx - 6} ${pos.cy - 5} C ${pos.cx - 2} ${pos.cy - 8}, ${pos.cx + 4} ${pos.cy - 2}, ${pos.cx + 6} ${pos.cy - 5}`} fill="none" stroke="#0891b2" strokeWidth="2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 7} ${pos.cy} C ${pos.cx - 1} ${pos.cy - 3}, ${pos.cx + 5} ${pos.cy + 3}, ${pos.cx + 7} ${pos.cy}`} fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 5} ${pos.cy + 5} C ${pos.cx} ${pos.cy + 2}, ${pos.cx + 3} ${pos.cy + 7}, ${pos.cx + 6} ${pos.cy + 4}`} fill="none" stroke="#0e7490" strokeWidth="2" strokeLinecap="round" />
+                                </g>
+                              )}
+
+                              {org.id === 'golgi' && (
+                                <g transform={`rotate(${selectedCellType === 'plant' ? 30 : -15}, ${pos.cx}, ${pos.cy})`}>
+                                  <path d={`M ${pos.cx - 8} ${pos.cy - 5} Q ${pos.cx} ${pos.cy - 8} ${pos.cx + 8} ${pos.cy - 5}`} fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 7} ${pos.cy - 2} Q ${pos.cx} ${pos.cy - 5} ${pos.cx + 7} ${pos.cy - 2}`} fill="none" stroke="#10b981" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 6} ${pos.cy + 1} Q ${pos.cx} ${pos.cy - 2} ${pos.cx + 6} ${pos.cy + 1}`} fill="none" stroke="#34d399" strokeWidth="2.2" strokeLinecap="round" />
+                                  <path d={`M ${pos.cx - 5} ${pos.cy + 4} Q ${pos.cx} ${pos.cy + 1} ${pos.cx + 5} ${pos.cy + 4}`} fill="none" stroke="#059669" strokeWidth="2.2" strokeLinecap="round" />
+                                  <circle cx={pos.cx - 10} cy={pos.cy - 4} r="1.1" fill="#047857" />
+                                  <circle cx={pos.cx + 10} cy={pos.cy - 3} r="1.1" fill="#047857" />
+                                  <circle cx={pos.cx + 8} cy={pos.cy + 5} r="1" fill="#047857" />
+                                </g>
+                              )}
+
+                              {org.id === 'chloroplast' && (
+                                <g transform={`rotate(-20, ${pos.cx}, ${pos.cy})`}>
+                                  <ellipse cx={pos.cx} cy={pos.cy} rx={pos.r} ry={pos.r * 0.65} fill="#84cc16" fillOpacity="0.9" stroke="#3f6212" strokeWidth="1" />
+                                  <rect x={pos.cx - 4} y={pos.cy - 3} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                  <rect x={pos.cx - 4} y={pos.cy - 1} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                  <rect x={pos.cx - 4} y={pos.cy + 1} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                  <rect x={pos.cx + 1} y={pos.cy - 3} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                  <rect x={pos.cx + 1} y={pos.cy - 1} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                  <rect x={pos.cx + 1} y={pos.cy + 1} width="3" height="1.2" rx="0.4" fill="#15803d" />
+                                </g>
+                              )}
+
+                              {org.id === 'vacuole' && (
+                                <path
+                                  d={`M ${pos.cx - pos.r + 2} ${pos.cy - 4} C ${pos.cx - pos.r / 2} ${pos.cy - pos.r}, ${pos.cx + pos.r / 2} ${pos.cy - pos.r + 2}, ${pos.cx + pos.r - 2} ${pos.cy - 2} C ${pos.cx + pos.r} ${pos.cy + pos.r / 2}, ${pos.cx + pos.r / 2} ${pos.cy + pos.r}, ${pos.cx - pos.r / 2} ${pos.cy + pos.r - 2} Z`}
+                                  fill="#38bdf8" fillOpacity="0.5" stroke="#0284c7" strokeWidth="1.5"
+                                />
+                              )}
+
+                              {org.id === 'lysosome' && (
+                                <g>
+                                  <circle cx={pos.cx} cy={pos.cy} r={pos.r} fill="#f87171" fillOpacity="0.9" stroke="#b91c1c" strokeWidth="1" />
+                                  <circle cx={pos.cx - 1} cy={pos.cy - 1} r="0.6" fill="#7f1d1d" />
+                                  <circle cx={pos.cx + 1} cy={pos.cy + 1} r="0.6" fill="#7f1d1d" />
+                                </g>
+                              )}
+
+                              {org.id === 'peroxisome' && (
+                                <g>
+                                  <circle cx={pos.cx} cy={pos.cy} r={pos.r} fill="#fb7185" fillOpacity="0.9" stroke="#be123c" strokeWidth="1" />
+                                  <rect x={pos.cx - 1} y={pos.cy - 1} width="2" height="2" fill="#881337" />
+                                </g>
+                              )}
+
+                              {org.id === 'ribosome' && (
+                                <g>
+                                  <circle cx={pos.cx - 1} cy={pos.cy - 1} r="1.2" fill="#4338ca" />
+                                  <circle cx={pos.cx + 1} cy={pos.cy + 1} r="1.2" fill="#4338ca" />
+                                </g>
+                              )}
+
+                              {org.id === 'cytoskeleton' && (
+                                <g>
+                                  <path d={`M ${pos.cx - 6} ${pos.cy - 5} L ${pos.cx + 6} ${pos.cy + 5}`} stroke="#d97706" strokeWidth="1.2" strokeDasharray="1,1" />
+                                  <path d={`M ${pos.cx - 5} ${pos.cy + 5} L ${pos.cx + 5} ${pos.cy - 5}`} stroke="#d97706" strokeWidth="1.2" strokeDasharray="1,1" />
+                                </g>
+                              )}
+
+                              <text
+                                x={pos.cx} y={pos.cy + (pos.r > 10 ? pos.r + 3.5 : 0.8)}
+                                textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="2.6" fontWeight="800"
+                                className="pointer-events-none select-none drop-shadow-sm"
+                              >
+                                {org.name.split(' ')[0]}
+                              </text>
+                            </g>
+                          );
+                        })}
+                      </svg>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500 bg-slate-100 px-4 py-2 rounded-xl">
+                      <Info className="w-4 h-4 text-purple-600 shrink-0" />
+                      <span>Click on any organelle hotspot to inspect its full molecular structure.</span>
+                    </div>
+                  </div>
+
+                  {/* Right: Organelle Inspector Card */}
+                  <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-slate-100 h-44">
+                      <ImageWithFallback src={activeOrganelle.imageUrl} alt={activeOrganelle.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent flex flex-col justify-end p-4">
+                        <span className="text-xs font-bold text-purple-300 uppercase tracking-wider">{activeOrganelle.membrane}</span>
+                        <h2 className="text-2xl font-black text-white">{activeOrganelle.name}</h2>
+                      </div>
+                    </div>
+
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{activeOrganelle.shortDesc}</p>
+
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Key Functions</h3>
+                      <ul className="space-y-1.5">
+                        {activeOrganelle.keyFunctions.map((fn, idx) => (
+                          <li key={idx} className="flex items-start text-xs sm:text-sm text-slate-700 space-x-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                            <span>{fn}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                      <span>Discovered: <strong>{activeOrganelle.discoveryYear}</strong></span>
+                      <span>Pioneer: <strong>{activeOrganelle.discoveredBy}</strong></span>
+                      <button
+                        onClick={() => setDossierModalId(activeOrganelle.id)}
+                        className="text-purple-600 hover:text-purple-800 font-bold flex items-center gap-1"
+                      >
+                        <span>Full Dossier</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: ORGANELLES DIRECTORY & LIBRARY */}
+            {activeTab === 'library' && (
+              <div className="space-y-6">
+
+                {/* Header Toolbar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+                      <Layers className="w-6 h-6 text-purple-600" />
+                      Subcellular Organelle Directory
+                    </h1>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                      Explore comprehensive biological specifications, real-world analogies, and TEM micrographs.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center space-x-2 self-start md:self-auto">
+                    <div className="flex p-1 bg-slate-100 rounded-xl border border-slate-200">
+                      <button
+                        onClick={() => setLibraryViewMode('list')}
+                        className={`p-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                          libraryViewMode === 'list'
+                            ? 'bg-white text-purple-700 shadow-sm border border-slate-200'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <LayoutList className="w-4 h-4" />
+                        <span className="hidden sm:inline">List View</span>
+                      </button>
+                      <button
+                        onClick={() => setLibraryViewMode('grid')}
+                        className={`p-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                          libraryViewMode === 'grid'
+                            ? 'bg-white text-purple-700 shadow-sm border border-slate-200'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        <LayoutGrid className="w-4 h-4" />
+                        <span className="hidden sm:inline">Grid View</span>
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => setIsCompareOpen(true)}
+                      className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs sm:text-sm flex items-center space-x-2 shadow-sm transition-all"
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      <span>Compare</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Filter Controls */}
+                <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type="text"
+                      placeholder="Search organelles by name, function, pathology, or machinery..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-xs sm:text-sm text-slate-900 focus:outline-none focus:border-purple-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Cell Type</label>
+                      <select
+                        value={cellTypeFilter}
+                        onChange={(e) => setCellTypeFilter(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-purple-600"
+                      >
+                        <option value="all">All Cell Types</option>
+                        <option value="animal">Animal Cells</option>
+                        <option value="plant">Plant Cells</option>
+                        <option value="prokaryote">Prokaryotic Cells</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Membrane Structure</label>
+                      <select
+                        value={membraneFilter}
+                        onChange={(e) => setMembraneFilter(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-purple-600"
+                      >
+                        <option value="all">All Membrane Types</option>
+                        <option value="double">Double Membrane</option>
+                        <option value="single">Single Membrane</option>
+                        <option value="non-membrane">Non-membrane bound</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Functional Category</label>
+                      <select
+                        value={functionFilter}
+                        onChange={(e) => setFunctionFilter(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-xs text-slate-800 font-medium focus:outline-none focus:border-purple-600"
+                      >
+                        <option value="all">All Categories</option>
+                        <option value="control">Genetic & Control</option>
+                        <option value="energy">Energy & Metabolism</option>
+                        <option value="secretion">Protein & Lipid Secretion</option>
+                        <option value="waste">Recycling & Waste</option>
+                        <option value="structure">Structural Support</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* List View or Grid View */}
+                {libraryViewMode === 'list' ? (
+                  <div className="space-y-4">
+                    {filteredOrganelles.map((org) => {
+                      const isFav = favorites.includes(org.id);
+                      return (
+                        <div
+                          key={org.id}
+                          className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col md:flex-row gap-5 items-start md:items-center justify-between group"
+                        >
+                          <div className="w-full md:w-44 h-36 md:h-32 rounded-xl overflow-hidden border border-slate-200 bg-slate-100 shrink-0 relative">
+                            <ImageWithFallback src={org.imageUrl} alt={org.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <button
+                              onClick={() => toggleFavorite(org.id)}
+                              className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 text-slate-600 hover:text-rose-600 shadow-sm"
+                            >
+                              <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-600 text-rose-600' : ''}`} />
+                            </button>
+                          </div>
+
+                          <div className="flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${org.badgeBg} ${org.badgeText}`}>
+                                {org.membrane}
+                              </span>
+                              <div className="flex gap-1">
+                                {org.cellTypes.map((t, i) => (
+                                  <span key={i} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                              <span className="text-xs text-slate-400 font-mono ml-auto">Discovered {org.discoveryYear}</span>
+                            </div>
+
+                            <div>
+                              <h3 className="text-lg font-bold text-slate-900 group-hover:text-purple-700 transition-colors">
+                                {org.name}
+                              </h3>
+                              <p className="text-xs text-purple-700 font-semibold">{org.tagline}</p>
+                            </div>
+
+                            <p className="text-xs text-slate-600 leading-relaxed line-clamp-2">{org.shortDesc}</p>
+
+                            <div className="pt-1 flex flex-wrap gap-4 text-xs text-slate-500">
+                              <span><strong>Key Macromolecules:</strong> {org.molecularMachinery.split(',')[0]}</span>
+                            </div>
+                          </div>
+
+                          <div className="w-full md:w-auto flex md:flex-col items-center justify-end gap-2 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 shrink-0">
+                            <button
+                              onClick={() => setDossierModalId(org.id)}
+                              className="flex-1 md:flex-initial px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Full Dossier</span>
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setActiveOrganelleId(org.id);
+                                setActiveTab('explorer');
+                              }}
+                              className="flex-1 md:flex-initial px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <Compass className="w-3.5 h-3.5" />
+                              <span>Locate</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredOrganelles.map((org) => {
+                      const isFav = favorites.includes(org.id);
+                      return (
+                        <div key={org.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden group">
+                          <div className="relative h-40 bg-slate-100">
+                            <ImageWithFallback src={org.imageUrl} alt={org.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                            <button
+                              onClick={() => toggleFavorite(org.id)}
+                              className="absolute top-3 right-3 p-2 rounded-full bg-white/90 text-slate-600 hover:text-rose-600 shadow-sm"
+                            >
+                              <Heart className={`w-4 h-4 ${isFav ? 'fill-rose-600 text-rose-600' : ''}`} />
+                            </button>
+                          </div>
+
+                          <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${org.badgeBg} ${org.badgeText}`}>
+                                  {org.membrane}
+                                </span>
+                                <span className="text-xs text-slate-400 font-mono">Disc. {org.discoveryYear}</span>
+                              </div>
+
+                              <h3 className="text-lg font-bold text-slate-900 mt-2">{org.name}</h3>
+                              <p className="text-xs text-purple-700 font-semibold mb-2">{org.tagline}</p>
+                              <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">{org.shortDesc}</p>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                              <button
+                                onClick={() => setDossierModalId(org.id)}
+                                className="text-xs font-bold text-purple-600 hover:text-purple-800 flex items-center gap-1"
+                              >
+                                <Eye className="w-3.5 h-3.5" />
+                                <span>View Full Dossier</span>
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setActiveOrganelleId(org.id);
+                                  setActiveTab('explorer');
+                                }}
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                              >
+                                <Compass className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 3: CELL BIOLOGY HISTORY TIMELINE */}
+            {activeTab === 'history' && (
+              <div className="space-y-6">
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 flex items-center gap-2">
+                    <BookOpen className="w-6 h-6 text-purple-600" />
+                    History of Cell Biology & Subcellular Discoveries
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                    Milestones from Robert Hooke's 1665 cork drawing to ultrathin Transmission Electron Microscopy (TEM).
+                  </p>
+                </div>
+
+                <div className="relative border-l-2 border-purple-200 ml-4 sm:ml-8 pl-6 sm:pl-8 space-y-8 py-4">
+                  {HISTORY_TIMELINE.map((item, index) => (
+                    <div key={index} className="relative group">
+                      <div className="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full bg-purple-600 border-2 border-white shadow-sm" />
+
+                      <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div className="md:col-span-8 space-y-3">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-xs font-black font-mono px-3 py-1 rounded-full bg-purple-100 text-purple-800 border border-purple-200">
+                              {item.year}
+                            </span>
+                            <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                              {item.category}
+                            </span>
+                          </div>
+
+                          <h2 className="text-lg sm:text-xl font-bold text-slate-900">{item.title}</h2>
+                          <p className="text-xs text-purple-700 font-bold">Key Pioneer: {item.scientist}</p>
+                          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">{item.discovery}</p>
+
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium">
+                            <strong className="text-purple-700">Historical Significance:</strong> {item.impact}
+                          </div>
+                        </div>
+
+                        <div className="md:col-span-4 rounded-xl border border-slate-200 bg-white shadow-sm p-2 sm:p-3 flex items-center justify-center">
+                         <ImageWithFallback src={item.imageUrl} alt={item.title} className="w-full h-auto max-h-64 sm:max-h-72 object-contain rounded-lg drop-shadow-sm" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+          </main>
+
+          {/* DOSSIER MODAL */}
+          {dossierOrganelle && (
+            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white max-w-2xl w-full rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="p-5 bg-slate-900 text-white flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider">{dossierOrganelle.membrane}</span>
+                    <h2 className="text-2xl font-black">{dossierOrganelle.name}</h2>
+                  </div>
+                  <button onClick={() => setDossierModalId(null)} className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-5 flex-1">
+                  <div className="h-48 rounded-xl overflow-hidden border border-slate-200">
+                    <ImageWithFallback src={dossierOrganelle.imageUrl} alt={dossierOrganelle.name} className="w-full h-full object-cover" />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                      <span className="text-xs font-bold text-slate-500 uppercase block mb-1">Ultrastructure Overview</span>
+                      <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">{dossierOrganelle.detailedDesc}</p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                      <span className="text-xs font-bold text-slate-500 uppercase block mb-1">Molecular Machinery</span>
+                      <p className="text-xs sm:text-sm text-slate-700">{dossierOrganelle.molecularMachinery}</p>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-100">
+                      <span className="text-xs font-bold text-rose-700 uppercase block mb-1">Medical Pathology & Clinical Significance</span>
+                      <p className="text-xs sm:text-sm text-rose-900">{dossierOrganelle.medicalPathology}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                  <button onClick={() => setDossierModalId(null)} className="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs sm:text-sm">
+                    Close Dossier
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* COMPARE MODAL */}
+          {isCompareOpen && (
+            <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-white max-w-4xl w-full rounded-2xl border border-slate-200 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ArrowLeftRight className="w-5 h-5 text-purple-600" />
+                    <h2 className="text-lg font-extrabold text-slate-900">Organelle Comparison Matrix</h2>
+                  </div>
+                  <button onClick={() => setIsCompareOpen(false)} className="p-2 rounded-full hover:bg-slate-100 text-slate-500">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                      { id: compareId1, setId: setCompareId1, label: 'Organelle A' },
+                      { id: compareId2, setId: setCompareId2, label: 'Organelle B' }
+                    ].map((col, idx) => {
+                      const org = ORGANELLES_DATA.find(o => o.id === col.id) || ORGANELLES_DATA[0];
+                      return (
+                        <div key={idx} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                          <div>
+                            <label className="text-xs font-bold text-slate-400 uppercase block mb-1">{col.label}</label>
+                            <select
+                              value={col.id}
+                              onChange={(e) => col.setId(e.target.value)}
+                              className="w-full bg-white border border-slate-200 rounded-xl py-2 px-3 text-xs sm:text-sm font-bold text-slate-900"
+                            >
+                              {ORGANELLES_DATA.map(o => (
+                                <option key={o.id} value={o.id}>{o.name}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div className="space-y-2 pt-2">
+                            <div className="h-32 rounded-xl overflow-hidden border border-slate-200">
+                              <ImageWithFallback src={org.imageUrl} alt={org.name} className="w-full h-full object-cover" />
+                            </div>
+                            <h3 className="text-base font-bold text-slate-900">{org.name}</h3>
+                            <p className="text-xs text-purple-700 font-semibold">{org.tagline}</p>
+                            <div className="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+                              <strong>Membrane:</strong> {org.membrane}
+                            </div>
+                            <div className="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200">
+                              <strong>Machinery:</strong> {org.molecularMachinery}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                  <button onClick={() => setIsCompareOpen(false)} className="px-5 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs sm:text-sm shadow-sm">
+                    Done Comparing
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FOOTER */}
+          <footer className="mt-12 bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+            <p>A project from Souban Chakraborty</p>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
